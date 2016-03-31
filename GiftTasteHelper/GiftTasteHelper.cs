@@ -30,6 +30,8 @@ namespace GiftTasteHelper
             //MenuEvents.MenuClosed += OnClickableMenuClosed;
             MenuEvents.MenuChanged += OnClickableMenuChanged;
             GameEvents.UpdateTick += OnUpdateTick;
+
+            Utils.DebugLog("GiftHelper 39.2 compat"); // So i know the right one is running
         }
 
         private void OnUpdateTick(object sender, EventArgs e)
@@ -119,7 +121,14 @@ namespace GiftTasteHelper
         {
             Debug.Assert(currentGiftHelper != null, "OnPostRenderEvent listener invoked when currentGiftHelper is null.");
 
-            currentGiftHelper.OnDraw();
+            try
+            {
+                currentGiftHelper.OnDraw();
+            }
+            catch(Exception ex)
+            {
+                Log.Error("error drawing current gift helper: " + ex);
+            }
         }
 
         private void DebugPrintMenuInfo(IClickableMenu priorMenu, IClickableMenu newMenu)

@@ -12,7 +12,8 @@ namespace GiftTasteHelper
         public static void DebugLog(string message)
         {
         #if DEBUG
-            Log.Debug(message);
+            //Log.Debug(message);
+            Log.Info(message); // Revert later
         #endif
         }
 

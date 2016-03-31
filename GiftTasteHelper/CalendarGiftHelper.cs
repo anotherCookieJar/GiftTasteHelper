@@ -6,6 +6,7 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
 using StardewValley.Menus;
 using StardewModdingAPI;
+using StardewModdingAPI.Inheritance;
 using StardewModdingAPI.Events;
 
 namespace GiftTasteHelper
@@ -14,6 +15,14 @@ namespace GiftTasteHelper
     {
         private Calendar calendar = new Calendar();
         private string previousHoverText = "";
+
+        public static float ZoomLevel
+        {
+            // TODO: conditional based on smapi version
+            // aka always return 1.0f if version > 39.2
+            get { return Game1.options.zoomLevel; }
+            //get { return 1.0f;}
+        }
 
         public override void Init(IClickableMenu menu)
         {
@@ -110,7 +119,7 @@ namespace GiftTasteHelper
             if (numItems == 0)
                 return;
 
-            float spriteScale = 2.0f; // 16x16 is pretty small
+            float spriteScale = 2.0f * ZoomLevel; // 16x16 is pretty small
             Rectangle spriteRect = giftInfo.FavouriteGifts[0].tileSheetSourceRect; // We just need the dimensions which we assume are all the same
             SVector2 scaledSpriteSize = new SVector2(spriteRect.Width * spriteScale, spriteRect.Height * spriteScale);
 
@@ -121,11 +130,13 @@ namespace GiftTasteHelper
             SVector2 mouse = new SVector2(Game1.getOldMouseX(), Game1.getOldMouseY());
 
             int padding = 4;
-            int rowHeight = Math.Max(maxTextSize.yi, scaledSpriteSize.yi) + padding;
-            int width = AdjustForTileSize(maxTextSize.xi + scaledSpriteSize.xi + padding);
-            int height = AdjustForTileSize(rowHeight * (numItems + 1)); // Add one to make room for the title
-            int x = AdjustForTileSize(mouse.x) - width;
-            int y = AdjustForTileSize(mouse.y);
+            int rowHeight = (int)Math.Max(maxTextSize.y * ZoomLevel, scaledSpriteSize.yi) + padding;
+            int width = AdjustForTileSize((maxTextSize.x * ZoomLevel) + scaledSpriteSize.xi) + padding;
+            int height = AdjustForTileSize(rowHeight * (numItems + 1), 0.5f); // Add one to make room for the title
+            int x = AdjustForTileSize(mouse.x, 0.5f, ZoomLevel) - width;
+            int y = AdjustForTileSize(mouse.y, 0.5f, ZoomLevel);
+            //int x = AdjustForTileSize(mouse.x) - width;
+            //int y = AdjustForTileSize(mouse.y);
 
             int viewportW = Game1.viewport.Width;
             int viewportH = Game1.viewport.Height;
@@ -147,17 +158,20 @@ namespace GiftTasteHelper
 
             // Draw the background of the tooltip
             SpriteBatch spriteBatch = Game1.spriteBatch;
-            spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, null, null);
+            spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.PointClamp, null, null);
 
             Rectangle menuTextureSourceRect = new Rectangle(0, 256, 60, 60);
-            IClickableMenu.drawTextureBox(spriteBatch, Game1.menuTexture, menuTextureSourceRect, tooltipPos.xi, tooltipPos.yi, width, height, Color.White);
+            IClickableMenu.drawTextureBox(spriteBatch, Game1.menuTexture, menuTextureSourceRect, tooltipPos.xi, tooltipPos.yi, width, height, Color.White, ZoomLevel);
 
             // Offset the sprite from the corner of the bg, and the text to the right and centered vertically of the sprite
             SVector2 spriteOffset = new SVector2(AdjustForTileSize(tooltipPos.x, 0.25f), AdjustForTileSize(tooltipPos.y, 0.25f));
             SVector2 textOffset = new SVector2(spriteOffset.x, spriteOffset.y + (spriteRect.Height / 2));
+            //SVector2 spriteOffset = new SVector2(tooltipPos.x + (Game1.tileSize * 0.25f), tooltipPos.y + (Game1.tileSize * 0.25f));
+            //SVector2 textOffset = new SVector2(spriteOffset.x, spriteOffset.y + (spriteRect.Height / 2) * Game1.options.zoomLevel);
 
             // Draw the title then set up the offset for the remaining text
-            spriteBatch.DrawString(Game1.smallFont, title, textOffset.ToXNAVector2(), Game1.textColor);
+            //spriteBatch.DrawString(Game1.smallFont, title, textOffset.ToXNAVector2(), Game1.textColor, 0.0f, Vector2.Zero, ZoomLevel, SpriteEffects.None, 0.0f);
+            DrawText(title, textOffset);
             textOffset.x += scaledSpriteSize.x + padding;
             textOffset.y += rowHeight;
             spriteOffset.y += rowHeight;
@@ -167,8 +181,8 @@ namespace GiftTasteHelper
                 NPCGiftInfo.ItemData item = giftInfo.FavouriteGifts[i];
 
                 // Draw the sprite for the item then the item text
-                spriteBatch.Draw(Game1.objectSpriteSheet, spriteOffset.ToXNAVector2(), item.tileSheetSourceRect, Color.White, 0.0f, Vector2.Zero, spriteScale, SpriteEffects.None, 0.0f);
-                spriteBatch.DrawString(Game1.smallFont, item.name, textOffset.ToXNAVector2(), Game1.textColor);
+                DrawText(item.name, textOffset);
+                DrawTexture(Game1.objectSpriteSheet, spriteOffset, item.tileSheetSourceRect, spriteScale);
 
                 // Move to the next row
                 spriteOffset.y += rowHeight;
@@ -177,10 +191,23 @@ namespace GiftTasteHelper
             spriteBatch.End();
         }
 
-        private int AdjustForTileSize(float v, float tileSizeMod = 0.5f)
+        private void DrawText(string text, SVector2 pos)
+        {
+            // If we draw the text with pointClamp it's going to look very bad when scaled
+            Game1.graphics.GraphicsDevice.SamplerStates[0] = SamplerState.LinearClamp;
+            Game1.spriteBatch.DrawString(Game1.smallFont, text, pos.ToXNAVector2(), Game1.textColor, 0.0f, Vector2.Zero, ZoomLevel, SpriteEffects.None, 0.0f);
+        }
+
+        private void DrawTexture(Texture2D texture, SVector2 pos, Rectangle source, float scale=1.0f)
+        {
+            Game1.graphics.GraphicsDevice.SamplerStates[0] = SamplerState.PointClamp;
+            Game1.spriteBatch.Draw(texture, pos.ToXNAVector2(), source, Color.White, 0.0f, Vector2.Zero, scale, SpriteEffects.None, 0.0f);
+        }
+
+        private int AdjustForTileSize(float v, float tileSizeMod = 0.5f, float zoom=1.0f)
         {
             float tileSize = (float)Game1.tileSize * tileSizeMod;
-            return (int)(v + tileSize);
+            return (int)((v + tileSize) * zoom);
         }
 
         private SVector2 ClampToViewport(int x, int y, int w, int h, int viewportW, int viewportH)

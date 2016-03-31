@@ -16,7 +16,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\..\SMAPI\StardewModdingAPI\bin\x86\Debug\Mods\GiftTasteHelper\</OutputPath>
+    <OutputPath>..\..\..\SMAPI\39.2\StardewModdingAPI\bin\x86\Debug\Mods\GiftTasteHelper\</OutputPath>
     <DefineConstants>TRACE;DEBUG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -25,7 +25,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\..\..\SMAPI\StardewModdingAPI\bin\Release\Mods\GiftTasteHelper\</OutputPath>
+    <OutputPath>..\..\..\SMAPI\39.2\StardewModdingAPI\bin\Release\Mods\GiftTasteHelper\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -64,7 +64,7 @@
     <Compile Include="Utils.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\SMAPI\StardewModdingAPI\StardewModdingAPI.csproj">
+    <ProjectReference Include="..\..\..\SMAPI\39.2\StardewModdingAPI\StardewModdingAPI.csproj">
       <Project>{f1a573b0-f436-472c-ae29-0b91ea6b9f8f}</Project>
       <Name>StardewModdingAPI</Name>
     </ProjectReference>
